@@ -464,9 +464,9 @@ def plot_backtest_results(data, result, ticker, strategy_name, initial_capital=1
 
 # ============ Streamlit 应用 ============
 def main():
-    st.set_page_config(page_title="量化回测系统", layout="wide", page_icon="📊")
+    st.set_page_config(page_title="StrategyLab", layout="wide", page_icon="📊")
 
-    st.title("📊 加密货币量化回测系统")
+    st.title("📊 StrategyLab")
     st.markdown("---")
 
     # 侧边栏 - 参数配置
