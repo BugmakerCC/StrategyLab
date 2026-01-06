@@ -283,7 +283,7 @@ def fetch_data(ticker, period, interval):
 
 
 # ============ 可视化 ============
-def plot_backtest_results(data, result, ticker, strategy_name):
+def plot_backtest_results(data, result, ticker, strategy_name, initial_capital=10000):
     """绘制回测结果"""
     buy_signals = result['buy_signals']
     sell_signals = result['sell_signals']
@@ -416,7 +416,7 @@ def plot_backtest_results(data, result, ticker, strategy_name):
 
     # 初始资金线
     fig.add_hline(
-        y=10000,
+        y=initial_capital,
         line_dash="dash",
         line_color="gray",
         row=3, col=1,
@@ -496,6 +496,16 @@ def main():
         help="选择K线的时间间隔"
     )
 
+    # 初始资金
+    initial_capital = st.sidebar.number_input(
+        "初始资金 ($)",
+        min_value=100,
+        max_value=1000000,
+        value=10000,
+        step=1000,
+        help="设置回测的初始资金"
+    )
+
     st.sidebar.markdown("---")
 
     # 策略选择
@@ -561,19 +571,19 @@ def main():
         with st.spinner(f"正在运行 {strategy_name} 策略..."):
             # 选择策略
             if strategy_name == 'RSI均值回归':
-                strategy = RSIStrategy(data)
+                strategy = RSIStrategy(data, initial_capital=initial_capital)
                 signals = strategy.generate_signals(**strategy_params)
             elif strategy_name == '移动平均线交叉':
-                strategy = MAStrategy(data)
+                strategy = MAStrategy(data, initial_capital=initial_capital)
                 signals = strategy.generate_signals(**strategy_params)
             elif strategy_name == '布林带突破':
-                strategy = BollingerStrategy(data)
+                strategy = BollingerStrategy(data, initial_capital=initial_capital)
                 signals = strategy.generate_signals(**strategy_params)
             elif strategy_name == 'MACD':
-                strategy = MACDStrategy(data)
+                strategy = MACDStrategy(data, initial_capital=initial_capital)
                 signals = strategy.generate_signals(**strategy_params)
             elif strategy_name == '动量突破':
-                strategy = MomentumStrategy(data)
+                strategy = MomentumStrategy(data, initial_capital=initial_capital)
                 signals = strategy.generate_signals(**strategy_params)
 
             # 运行回测
@@ -588,10 +598,13 @@ def main():
         col1, col2, col3, col4 = st.columns(4)
 
         with col1:
+            outperformance = result['total_return'] - result['buy_hold_return']
+            # 不使用delta_color，让Streamlit使用默认行为
+            # 默认应该是：正数=绿色上，负数=红色下
             st.metric(
-                "总收益率",
-                f"{result['total_return']:.2f}%",
-                delta=f"vs 买入持有: {result['total_return'] - result['buy_hold_return']:.2f}%"
+                label="总收益率",
+                value=f"{result['total_return']:.2f}%",
+                delta=f"{outperformance:.2f}% vs 买入持有"
             )
 
         with col2:
@@ -622,7 +635,7 @@ def main():
         st.markdown("---")
         st.subheader("📈 回测可视化")
 
-        fig = plot_backtest_results(data, result, ticker, strategy_name)
+        fig = plot_backtest_results(data, result, ticker, strategy_name, initial_capital)
         st.plotly_chart(fig, use_container_width=True)
 
         # 交易记录
